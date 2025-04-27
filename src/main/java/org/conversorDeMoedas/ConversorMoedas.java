@@ -6,14 +6,18 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Locale;
 import java.util.Scanner;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.github.cdimascio.dotenv.Dotenv;
 
 public class ConversorMoedas {
 
-    // 1) Só a chave, sem URL
-    private static final String API_KEY  = "971a2d142af2e66193aa00e0";
-    // 2) Base da ExchangeRate-API v6
+
+    private static final Dotenv dotenv = Dotenv.load();
+
+    private static final String API_KEY  = dotenv.get("API_KEY");
+
     private static final String BASE_URL = "https://v6.exchangerate-api.com/v6";
 
     public static void main(String[] args) throws Exception {
@@ -72,10 +76,10 @@ public class ConversorMoedas {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
-            // 4) força ponto decimal
+            // força ponto decimal no formato US
             String amt = String.format(Locale.US, "%.4f", amount);
 
-            // 3) formato correto do endpoint
+            // monta o endpoint
             String endpoint = String.format(
                     "%s/%s/pair/%s/%s/%s",
                     BASE_URL, API_KEY, from, to, amt
@@ -92,13 +96,13 @@ public class ConversorMoedas {
             JsonObject json = JsonParser.parseString(response.body())
                     .getAsJsonObject();
 
-            // checa sucesso
+            // checa o sucesso do código
             if (!"success".equals(json.get("result").getAsString())) {
                 System.err.println("API retornou erro: " + json);
                 return 0;
             }
 
-            // 5) captura o valor já convertido
+            // captura o valor já convertido
             return json.get("conversion_result").getAsDouble();
 
         } catch (Exception e) {
